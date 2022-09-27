@@ -137,7 +137,7 @@ async fn main() {
                 .long("group-id")
                 .help("Consumer group id")
                 .takes_value(true)
-                .default_value("example_consumer_group_id"),
+                .default_value("tokio-async-processing"),
         )
         .arg(
             Arg::with_name("log-conf")

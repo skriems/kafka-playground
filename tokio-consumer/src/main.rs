@@ -15,7 +15,7 @@ use common::context::CustomContext;
 // A type alias with your custom consumer can be created for convenience.
 type LoggingConsumer = StreamConsumer<CustomContext>;
 
-async fn consume_and_print(brokers: &str, group_id: &str, topics: &[&str]) {
+async fn consume(brokers: &str, group_id: &str, topics: &[&str]) {
     let context = CustomContext;
 
     let consumer: LoggingConsumer = ClientConfig::new()
@@ -61,7 +61,7 @@ async fn consume_and_print(brokers: &str, group_id: &str, topics: &[&str]) {
 
 #[tokio::main]
 async fn main() {
-    let matches = App::new("consumer example")
+    let matches = App::new("tokio-consumer")
         .version(option_env!("CARGO_PKG_VERSION").unwrap_or(""))
         .about("Simple command line consumer")
         .arg(
@@ -106,5 +106,5 @@ async fn main() {
     let brokers = matches.value_of("brokers").unwrap();
     let group_id = matches.value_of("group-id").unwrap();
 
-    consume_and_print(brokers, group_id, &topics).await
+    consume(brokers, group_id, &topics).await
 }
