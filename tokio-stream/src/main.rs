@@ -125,37 +125,39 @@ async fn main() {
         .about("Asynchronous computation example")
         .arg(
             Arg::with_name("brokers")
+                .help("Broker list in kafka format")
                 .short('b')
                 .long("brokers")
-                .help("Broker list in kafka format")
                 .takes_value(true)
                 .default_value("localhost:9092"),
         )
         .arg(
             Arg::with_name("group-id")
+                .help("Consumer group id")
                 .short('g')
                 .long("group-id")
-                .help("Consumer group id")
                 .takes_value(true)
                 .default_value("tokio-async-processing"),
         )
         .arg(
             Arg::with_name("log-conf")
-                .long("log-conf")
                 .help("Configure the logging format (example: 'rdkafka=trace')")
+                .long("log-conf")
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("input-topic")
+                .help("topic to consume from")
                 .long("input-topic")
-                .help("Input topic")
+                .short('i')
                 .takes_value(true)
                 .required(true),
         )
         .arg(
             Arg::with_name("output-topic")
+                .help("topic to send events to")
                 .long("output-topic")
-                .help("Output topic")
+                .short('o')
                 .takes_value(true)
                 .required(true),
         )
