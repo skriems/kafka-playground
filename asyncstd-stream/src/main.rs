@@ -1,100 +1,96 @@
-use std::future::Future;
-use std::pin::Pin;
 use std::time::Duration;
 
 use clap::{App, Arg};
 use futures::stream::StreamExt;
 
-use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
-use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{CommitMode, Consumer};
 use rdkafka::message::Message;
-use rdkafka::util::AsyncRuntime;
+use rdkafka::producer::FutureRecord;
 
 use serde::{Deserialize, Serialize};
 
-use common::context::CustomContext;
+use common::async_std::{create_consumer, create_producer};
 use common::utils::setup_logger;
 use log::{error, info, warn};
 
 /// https://github.com/fede1024/rust-rdkafka/blob/master/examples/runtime_async_std.rs
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Payload<'a> {
-    key: &'a str,
-    value: &'a str,
+#[derive(Debug, Deserialize, Serialize)]
+struct Event<'a> {
+    kind: &'a str,
+    amount: i32,
 }
 
-pub struct AsyncStdRuntime;
+struct Amount(i32);
 
-impl AsyncRuntime for AsyncStdRuntime {
-    type Delay = Pin<Box<dyn Future<Output = ()> + Send>>;
-
-    fn spawn<T>(task: T)
-    where
-        T: Future<Output = ()> + Send + 'static,
-    {
-        async_std::task::spawn(task);
+impl Amount {
+    fn new(amount: i32) -> Self {
+        Amount(amount)
     }
 
-    fn delay_for(duration: Duration) -> Self::Delay {
-        Box::pin(async_std::task::sleep(duration))
+    fn add(&mut self, amount: i32) {
+        self.0 += amount;
+    }
+
+    fn sub(&mut self, amount: i32) {
+        self.0 -= amount;
     }
 }
 
-async fn consume(brokers: &str, group_id: &str, topic: &str) {
-    // let producer_context = CustomContext;
-    // let producer: FutureProducer<CustomContext, AsyncStdRuntime> = ClientConfig::new()
-    //     .set("bootstrap.servers", brokers)
-    //     .set("message.timeout.ms", "5000")
-    //     .create_with_context(producer_context)
-    //     .expect("Producer creation error");
+async fn run(brokers: &str, group_id: &str, input_topic: &str, output_topic: &str) {
 
-    // let delivery_status = producer
-    //     .send::<Vec<u8>, _, _>(
-    //         FutureRecord::to(&topic).payload("hello from async-std"),
-    //         Duration::from_secs(0),
-    //     )
-    //     .await;
+    let producer = create_producer(&brokers);
+    let consumer = create_consumer(&brokers, &group_id);
 
-    // if let Err((e, _)) = delivery_status {
-    //     eprintln!("unable to send message: {}", e);
-    //     process::exit(1);
-    // }
-
-    let consumer_context = CustomContext;
-    let consumer: StreamConsumer<CustomContext, AsyncStdRuntime> = ClientConfig::new()
-        .set("bootstrap.servers", brokers)
-        .set("session.timeout.ms", "6000")
-        .set("enable.auto.commit", "false")
-        .set("auto.offset.reset", "earliest")
-        .set("group.id", group_id)
-        .set_log_level(RDKafkaLogLevel::Debug)
-        .create_with_context(consumer_context)
-        .expect("Consumer creation failed");
-    consumer.subscribe(&[&topic]).unwrap();
-
+    consumer.subscribe(&[&input_topic]).unwrap();
     let mut stream = consumer.stream();
+
+    let mut amount = Amount::new(0);
 
     loop {
         match stream.next().await {
             Some(Ok(message)) => match message.payload_view::<str>() {
-                Some(Ok(string)) => match serde_json::from_str::<Payload>(string) {
-                    Ok(parsed) => {
+                Some(Ok(string)) => match serde_json::from_str::<Event>(string) {
+                    Ok(event) => {
                         info!(
-                        "Processing message {}, key: {:?}, topic: {}, partition: {}, {:?}: key: {}, value: {}",
+                        "Processing message {}, key: {:?}, topic: {}, partition: {}, {:?}: kind: {}, amount: {}",
                         message.offset(),
                         message.key(),
                         message.topic(),
                         message.partition(),
                         message.timestamp(),
-                        parsed.key, parsed.value
+                        event.kind, event.amount
                     );
-                        consumer.commit_message(&message, CommitMode::Async).unwrap();
+
+                        match event.kind {
+                            "add" => amount.add(event.amount),
+                            "sub" => amount.sub(event.amount),
+                            _ => warn!("Unknown event kind: {}", event.kind),
+                        }
+
+                        if message.offset() % 10 == 0 {
+                            let delivery_status = producer
+                                .send::<Vec<u8>, _, _>(
+                                    FutureRecord::to(&output_topic).payload(&serde_json::json!({
+                                        "amount": amount.0,
+                                        "version": message.offset()
+                                    }).to_string()),
+                                    Duration::from_secs(0),
+                                )
+                                .await;
+
+                            if let Err((e, _)) = delivery_status {
+                                error!("Unable to send message: {}", e);
+                            }
+                            consumer
+                                .commit_message(&message, CommitMode::Async)
+                                .unwrap();
+                            info!("Committed offset: {}", message.offset());
+                        }
                     }
+
                     Err(parse_error) => {
                         error!("Cannot parse message {:?}: {:?}", string, parse_error);
-                        consumer.commit_message(&message, CommitMode::Async).unwrap();
                     }
                 },
                 Some(Err(_)) => error!("Message is not utf-8 encoded"),
@@ -117,31 +113,40 @@ async fn main() {
         .about("Demonstrates using rust-rdkafka with async-std")
         .arg(
             Arg::with_name("brokers")
+                .help("Broker list in kafka format")
                 .short('b')
                 .long("brokers")
-                .help("Broker list in kafka format")
                 .takes_value(true)
                 .default_value("localhost:9092"),
         )
         .arg(
             Arg::with_name("group-id")
+                .help("Consumer group id")
                 .short('g')
                 .long("group-id")
-                .help("Consumer group id")
                 .takes_value(true)
-                .default_value("async-std-consumer"),
+                .default_value("async-std"),
         )
         .arg(
-            Arg::with_name("topic")
-                .long("topic")
-                .help("topic")
+            Arg::with_name("input-topic")
+                .help("topic to consume from")
+                .long("input-topic")
+                .short('i')
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("output-topic")
+                .help("topic to send events to")
+                .long("output-topic")
+                .short('o')
                 .takes_value(true)
                 .required(true),
         )
         .arg(
             Arg::with_name("log-conf")
-                .long("log-conf")
                 .help("Configure the logging format (example: 'rdkafka=trace')")
+                .long("log-conf")
                 .takes_value(true),
         )
         .get_matches();
@@ -149,8 +154,9 @@ async fn main() {
     setup_logger(true, matches.value_of("log-conf"));
 
     let brokers = matches.value_of("brokers").unwrap();
-    let topic = matches.value_of("topic").unwrap().to_owned();
     let group_id = matches.value_of("group-id").unwrap();
+    let input_topic = matches.value_of("input-topic").unwrap().to_owned();
+    let output_topic = matches.value_of("output-topic").unwrap().to_owned();
 
-    consume(brokers, group_id, &topic).await;
+    run(brokers, group_id, &input_topic, &output_topic).await;
 }
