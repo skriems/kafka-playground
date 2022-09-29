@@ -4,6 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
+async-std = { workspace = true }
 chrono = "0.4.22"
 env_logger = "0.9.1"
 log = { workspace = true }

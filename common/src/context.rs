@@ -1,4 +1,4 @@
-use log::{info};
+use log::info;
 
 use rdkafka::client::ClientContext;
 use rdkafka::consumer::{ConsumerContext, Rebalance};
@@ -21,7 +21,7 @@ impl ConsumerContext for CustomContext {
         info!("Post rebalance {:?}", rebalance);
     }
 
-    fn commit_callback(&self, result: KafkaResult<()>, _offsets: &TopicPartitionList) {
-        info!("Committing offsets: {:?}", result);
+    fn commit_callback(&self, _result: KafkaResult<()>, offsets: &TopicPartitionList) {
+        info!("Committing offsets: {:?}", offsets);
     }
 }
