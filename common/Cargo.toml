@@ -1,5 +1,6 @@
 [package]
 name = "common"
+description = "Bootstrapping code common to all packages"
 version = "0.1.0"
 edition.workspace = true
 

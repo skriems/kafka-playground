@@ -39,8 +39,8 @@ impl Amount {
 
 async fn run(brokers: &str, group_id: &str, input_topic: &str, output_topic: &str) {
 
-    let producer = create_producer(&brokers);
     let consumer = create_consumer(&brokers, &group_id);
+    let producer = create_producer(&brokers, &group_id);
 
     consumer.subscribe(&[&input_topic]).unwrap();
     let mut stream = consumer.stream();
