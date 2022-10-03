@@ -46,14 +46,11 @@ pub fn create_consumer(
 
 pub fn create_producer(
     brokers: &str,
-    group_id: &str,
-
 ) -> FutureProducer<CustomContext, AsyncStdRuntime> {
     let context = CustomContext;
     let producer: FutureProducer<CustomContext, AsyncStdRuntime> = ClientConfig::new()
         .set("bootstrap.servers", brokers)
         .set("message.timeout.ms", "5000")
-        .set("group.id", group_id)
         .create_with_context(context)
         .expect("Producer creation error");
     producer

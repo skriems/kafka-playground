@@ -13,7 +13,7 @@ edition = "2021"
 
 [workspace.dependencies]
 async-std = {version = "1.12.0", features = ["attributes"]}
-clap = { version = "3.2.22", features = ["derive"] }
+clap = { version = "4.0.8", features = ["env", "derive"] }
 futures = "0.3.24"
 log = "0.4.17"
 rdkafka = { version = "0.25.0", features = ["ssl", "cmake-build"] }

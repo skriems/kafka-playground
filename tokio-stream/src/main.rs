@@ -1,7 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
-use clap::{value_t, App, Arg};
+use clap::{Command, Arg};
 use futures::stream::FuturesUnordered;
 use futures::{StreamExt, TryStreamExt};
 use log::info;
@@ -120,65 +120,59 @@ async fn run_async_processor(
 
 #[tokio::main]
 async fn main() {
-    let matches = App::new("Async example")
+    let matches = Command::new("Async example")
         .version(option_env!("CARGO_PKG_VERSION").unwrap_or(""))
         .about("Asynchronous computation example")
         .arg(
-            Arg::with_name("brokers")
+            Arg::new("brokers")
                 .help("Broker list in kafka format")
                 .short('b')
                 .long("brokers")
-                .takes_value(true)
                 .default_value("localhost:9092"),
         )
         .arg(
-            Arg::with_name("group-id")
+            Arg::new("group-id")
                 .help("Consumer group id")
                 .short('g')
                 .long("group-id")
-                .takes_value(true)
                 .default_value("tokio-async-processing"),
         )
         .arg(
-            Arg::with_name("log-conf")
+            Arg::new("log-conf")
                 .help("Configure the logging format (example: 'rdkafka=trace')")
                 .long("log-conf")
-                .takes_value(true),
         )
         .arg(
-            Arg::with_name("input-topic")
+            Arg::new("input-topic")
                 .help("topic to consume from")
                 .long("input-topic")
                 .short('i')
-                .takes_value(true)
                 .required(true),
         )
         .arg(
-            Arg::with_name("output-topic")
+            Arg::new("output-topic")
                 .help("topic to send events to")
                 .long("output-topic")
                 .short('o')
-                .takes_value(true)
                 .required(true),
         )
         .arg(
-            Arg::with_name("num-workers")
+            Arg::new("num-workers")
                 .long("num-workers")
                 .help("Number of workers")
-                .takes_value(true)
                 .default_value("1"),
         )
         .get_matches();
 
-    setup_logger(true, matches.value_of("log-conf"));
+    setup_logger(true, matches.get_one::<String>("log-conf"));
 
-    let brokers = matches.value_of("brokers").unwrap();
-    let group_id = matches.value_of("group-id").unwrap();
-    let input_topic = matches.value_of("input-topic").unwrap();
-    let output_topic = matches.value_of("output-topic").unwrap();
-    let num_workers = value_t!(matches, "num-workers", usize).unwrap();
+    let brokers = matches.get_one::<String>("brokers").unwrap();
+    let group_id = matches.get_one::<String>("group-id").unwrap();
+    let input_topic = matches.get_one::<String>("input-topic").unwrap();
+    let output_topic = matches.get_one::<String>("output-topic").unwrap();
+    let num_workers = matches.get_one::<usize>("num-workers").unwrap();
 
-    (0..num_workers)
+    (0..*num_workers)
         .map(|_| {
             tokio::spawn(run_async_processor(
                 brokers.to_owned(),

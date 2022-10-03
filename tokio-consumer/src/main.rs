@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{Command, Arg};
 use log::{info, warn};
 
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
@@ -15,7 +15,7 @@ use common::context::CustomContext;
 // A type alias with your custom consumer can be created for convenience.
 type LoggingConsumer = StreamConsumer<CustomContext>;
 
-async fn consume(brokers: &str, group_id: &str, topics: &[&str]) {
+async fn consume(brokers: &str, group_id: &str, topics: &str) {
     let context = CustomContext;
 
     let consumer: LoggingConsumer = ClientConfig::new()
@@ -31,7 +31,7 @@ async fn consume(brokers: &str, group_id: &str, topics: &[&str]) {
         .expect("Consumer creation failed");
 
     consumer
-        .subscribe(&topics.to_vec())
+        .subscribe(&[&topics])
         .expect("Can't subscribe to specified topics");
 
     loop {
@@ -61,50 +61,45 @@ async fn consume(brokers: &str, group_id: &str, topics: &[&str]) {
 
 #[tokio::main]
 async fn main() {
-    let matches = App::new("tokio-consumer")
+    let matches = Command::new("tokio-consumer")
         .version(option_env!("CARGO_PKG_VERSION").unwrap_or(""))
         .about("Simple command line consumer")
         .arg(
-            Arg::with_name("brokers")
+            Arg::new("brokers")
                 .short('b')
                 .long("brokers")
                 .help("Broker list in kafka format")
-                .takes_value(true)
                 .default_value("localhost:9092"),
         )
         .arg(
-            Arg::with_name("group-id")
+            Arg::new("group-id")
                 .short('g')
                 .long("group-id")
                 .help("Consumer group id")
-                .takes_value(true)
                 .default_value("example_consumer_group_id"),
         )
         .arg(
-            Arg::with_name("log-conf")
+            Arg::new("log-conf")
                 .long("log-conf")
                 .help("Configure the logging format (example: 'rdkafka=trace')")
-                .takes_value(true),
         )
         .arg(
-            Arg::with_name("topics")
+            Arg::new("topics")
                 .short('t')
                 .long("topics")
                 .help("Topic list")
-                .takes_value(true)
-                .multiple(true)
                 .required(true),
         )
         .get_matches();
 
-    setup_logger(true, matches.value_of("log-conf"));
+    setup_logger(true, matches.get_one::<String>("log-conf"));
 
     let (version_n, version_s) = get_rdkafka_version();
     info!("rd_kafka_version: 0x{:08x}, {}", version_n, version_s);
 
-    let topics = matches.values_of("topics").unwrap().collect::<Vec<&str>>();
-    let brokers = matches.value_of("brokers").unwrap();
-    let group_id = matches.value_of("group-id").unwrap();
+    let topics = matches.get_one::<String>("topics").unwrap();
+    let brokers = matches.get_one::<String>("brokers").unwrap();
+    let group_id = matches.get_one::<String>("group-id").unwrap();
 
     consume(brokers, group_id, &topics).await
 }

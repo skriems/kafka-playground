@@ -41,7 +41,7 @@ impl Amount {
 async fn run(brokers: &str, group_id: &str, input_topic: &str, output_topic: &str) {
 
     let consumer = create_consumer(&brokers, &group_id);
-    let producer = create_producer(&brokers, &group_id);
+    let producer = create_producer(&brokers);
 
     consumer.subscribe(&[&input_topic]).unwrap();
     let mut stream = consumer.stream();
@@ -111,12 +111,12 @@ async fn run(brokers: &str, group_id: &str, input_topic: &str, output_topic: &st
 async fn main() {
     let matches = cli::get_matches();
 
-    setup_logger(true, matches.value_of("log-conf"));
+    setup_logger(true, matches.get_one::<String>("log-conf"));
 
-    let brokers = matches.value_of("brokers").unwrap();
-    let group_id = matches.value_of("group-id").unwrap();
-    let input_topic = matches.value_of("input-topic").unwrap().to_owned();
-    let output_topic = matches.value_of("output-topic").unwrap().to_owned();
+    let brokers = matches.get_one::<String>("brokers").unwrap();
+    let group_id = matches.get_one::<String>("group-id").unwrap();
+    let input_topic = matches.get_one::<String>("input-topic").unwrap();
+    let output_topic = matches.get_one::<String>("output-topic").unwrap();
 
     run(brokers, group_id, &input_topic, &output_topic).await;
 }
