@@ -6,7 +6,7 @@ edition.workspace = true
 [dependencies]
 async-std = { workspace = true }
 clap = { workspace = true }
-common = { path = "../common" }
+lib = { path = "../lib" }
 futures = { workspace = true }
 log = { workspace = true }
 rdkafka = { workspace = true }

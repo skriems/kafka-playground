@@ -7,8 +7,8 @@ use rdkafka::consumer::{CommitMode, Consumer};
 use rdkafka::message::Message;
 use rdkafka::util::get_rdkafka_version;
 
-use common::utils::setup_logger;
-use common::context::CustomContext;
+use lib::utils::setup_logger;
+use lib::context::CustomContext;
 
 /// https://github.com/fede1024/rust-rdkafka/blob/master/examples/simple_consumer.rs
 

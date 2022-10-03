@@ -5,7 +5,7 @@ edition.workspace = true
 
 [dependencies]
 clap = { workspace = true }
-common = { path = "../common" }
+lib = { path = "../lib" }
 futures = { workspace = true }
 log = { workspace = true }
 rand = "0.8.5"

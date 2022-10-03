@@ -8,8 +8,8 @@ use rdkafka::producer::FutureRecord;
 
 use serde::{Deserialize, Serialize};
 
-use common::async_std::{create_consumer, create_producer};
-use common::utils::setup_logger;
+use lib::async_std::{create_consumer, create_producer};
+use lib::utils::setup_logger;
 use log::{error, info, warn};
 
 mod cli;

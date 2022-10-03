@@ -13,7 +13,7 @@ use rdkafka::message::{BorrowedMessage, OwnedMessage};
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::Message;
 
-use common::utils::setup_logger;
+use lib::utils::setup_logger;
 
 /// https://github.com/fede1024/rust-rdkafka/blob/master/examples/asynchronous_processing.rs
 
