@@ -1,13 +1,10 @@
 [package]
-name = "asyncstd-stream"
+name = "zeou"
 version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
-async-std = { workspace = true }
-clap = { workspace = true }
 lib = { path = "../lib" }
-futures = { workspace = true }
 log = { workspace = true }
 rdkafka = { workspace = true }
 serde = { workspace = true }

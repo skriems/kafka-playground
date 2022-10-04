@@ -1,9 +1,10 @@
 [workspace]
 members = [
-  "asyncstd-stream",
-  "lib",
-  "tokio-consumer",
-  "tokio-stream"
+    "asyncstd",
+    "lib",
+    "tokio-consumer",
+    "tokio-stream",
+    "zeou",
 ]
 
 [workspace.package]
