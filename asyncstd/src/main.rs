@@ -15,7 +15,7 @@ async fn main() {
             commands::process(sub_matches).await;
         }
         _ => {
-            println!("not implemented");
+            unimplemented!();
         }
     }
 }

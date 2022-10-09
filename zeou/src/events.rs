@@ -11,7 +11,7 @@ use log::{error, info, warn};
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Command<'a> {
-    kind: &'a str,
+    command: &'a str,
 }
 
 pub async fn process_message(
@@ -21,7 +21,7 @@ pub async fn process_message(
 ) {
     match message.payload_view::<str>() {
         Some(Ok(string)) => match serde_json::from_str::<Command>(string) {
-            Ok(command) => {
+            Ok(cmd) => {
                 info!(
                     "Processing message {}, key: {:?}, topic: {}, partition: {}, {:?}: kind: {}",
                     message.offset(),
@@ -29,7 +29,7 @@ pub async fn process_message(
                     message.topic(),
                     message.partition(),
                     message.timestamp(),
-                    command.kind
+                    cmd.command
                 );
 
                 // match event.kind {

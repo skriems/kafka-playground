@@ -15,7 +15,7 @@ use zeou::events;
 #[derive(Debug, Deserialize, Serialize)]
 struct Command<'a> {
     /// kind of the command
-    kind: &'a str,
+    command: &'a str,
 }
 
 pub async fn process(matches: &ArgMatches) {
@@ -41,10 +41,10 @@ pub async fn process(matches: &ArgMatches) {
             Some(Ok(message)) => { 
                 match message.payload_view::<str>() {
                     Some(Ok(string)) => match serde_json::from_str::<Command>(string) {
-                        Ok(command) => {
-                            match command.kind {
+                        Ok(cmd) => {
+                            match cmd.command {
                                 "createEvent" => events::process_message(message, &consumer, &producer).await,
-                                _ => warn!("Unknown command: {}", command.kind),
+                                _ => warn!("Unknown command: {}", cmd.command),
                             }
                         },
                         Err(error) => error!("Error deserializing message: {}", error),
