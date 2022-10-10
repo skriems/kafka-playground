@@ -41,19 +41,19 @@ pub async fn process(matches: &ArgMatches) {
             Some(Ok(message)) => { 
                 match message.payload_view::<str>() {
                     Some(Ok(string)) => match serde_json::from_str::<Command>(string) {
-                        Ok(cmd) => {
-                            match cmd.command {
+                        Ok(deserialized) => {
+                            match deserialized.command {
                                 "createEvent" => events::process_message(message, &consumer, &producer).await,
-                                _ => warn!("Unknown command: {}", cmd.command),
+                                _ => warn!("Unhandled command: {}", deserialized.command),
                             }
                         },
                         Err(error) => error!("Error deserializing message: {}", error),
                     },
-                    Some(Err(error)) => error!("Error reading message: {}", error),
-                    None => warn!("Error: no message?"),
+                    Some(Err(utf8_error)) => error!("Error reading message: {}", utf8_error),
+                    None => warn!("Warning: no message?"),
                 }
             },
-            Some(Err(error)) => error!("Error receiving message: {}", error),
+            Some(Err(kafka_error)) => error!("Error receiving message: {}", kafka_error),
             None => warn!("Consumer unexpectedly returned no messages"),
         }
     }
