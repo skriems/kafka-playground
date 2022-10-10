@@ -1,4 +1,4 @@
-use clap::{arg, ArgAction, ArgMatches, Command};
+use clap::{arg, ArgMatches, Command};
 
 ///
 ///
@@ -11,13 +11,12 @@ use clap::{arg, ArgAction, ArgMatches, Command};
 fn process_command() -> Command {
     Command::new("process")
         .about("process kafka messages")
-        .arg_required_else_help(true)
         .arg(
             arg!(-d --domain <DOMAIN> "Limit processing to a specific domain (can be more than one!).\nIf not set, all are being processed.\n")
                 .next_line_help(true)
-                .action(ArgAction::Append)
-                .num_args(0..=5)
-                .value_parser(["articles", "backpacks", "crews", "events", "users"])
+                .value_delimiter(',')
+                .value_parser(["articles", "backpacks", "circles", "events", "users"])
+                .default_value("articles,backpacks,circles,events,users")
         )
         .arg(
             arg!(-b --brokers <BROKERS> "broker list in kafka format")
