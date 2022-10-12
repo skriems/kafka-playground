@@ -14,15 +14,20 @@ fn process_command() -> Command {
         .arg(
             arg!(-d --domain <DOMAIN> "Limit processing to a specific domain (can be more than one!).\nIf not set, all are being processed.\n")
                 .next_line_help(true)
+                .env("ZEOU_DOMAINS")
                 .value_delimiter(',')
                 .value_parser(["articles", "backpacks", "circles", "events", "users"])
                 .default_value("articles,backpacks,circles,events,users")
         )
         .arg(
             arg!(-b --brokers <BROKERS> "broker list in kafka format")
+                .env("ZEOU_BROKER")
                 .default_value("localhost:9092"),
         )
-        .arg(arg!(-g --"group-id" <GROUP_ID> "consumer group id").default_value("async-std"))
+        .arg(
+            arg!(-g --"group-id" <GROUP_ID> "consumer group id")
+                .env("ZEOU_GROUP_ID")
+                .default_value("async-std"))
         .arg(
             arg!(-l --"log-conf" <LOG_CONF> "configure the logging format (example: 'rdkafka=trace')")
         )
