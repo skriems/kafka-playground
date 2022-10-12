@@ -1,8 +1,8 @@
 [package]
 name = "lib"
-description = "Bootstrapping code common to all packages"
-version = "0.1.0"
+version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 async-std = { workspace = true }
