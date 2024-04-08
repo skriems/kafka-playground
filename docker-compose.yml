@@ -1,0 +1,11 @@
+services:
+  asyncstd:
+    image: zeou/worker-rs:latest
+    container_name: worker-rs
+    build:
+      context: .
+    command: ./asyncstd process
+    environment:
+      ZEOU_BROKER: kafka:9092
+      ZEOU_DOMAINS: events
+      ZEOU_GROUP_ID: events-group
